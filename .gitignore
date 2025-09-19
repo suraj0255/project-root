@@ -1,0 +1,32 @@
+# Visual Studio temporary files, build results, and cache
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build results
+bin/
+obj/
+Debug/
+Release/
+
+# Rider IDE files
+.idea/
+
+# NUGET
+*.nupkg
+*.snupkg
+project.lock.json
+*.nuget.props
+*.nuget.targets
+
+# ASP.NET / Blazor / web stuff
+wwwroot/build/
+*.staticwebassets.cache
+appsettings*.json
+
+# Others
+*.DS_Store
+*.log
+*.vsix
