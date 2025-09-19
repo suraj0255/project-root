@@ -1,41 +1,60 @@
+using Microsoft.EntityFrameworkCore;
+using Scalar.AspNetCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+// EF Core InMemory
+builder.Services.AddDbContext<AppDbContext>(opt =>
+    opt.UseInMemoryDatabase("m1_db"));
+
+// Add OpenAPI/Scalar for API docs
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// API docs
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.MapOpenApi();       // JSON spec
+    app.MapScalarApiReference(); // UI docs with Scalar
 }
 
-app.UseHttpsRedirection();
+// Health check
+app.MapGet("/health", () => Results.Ok("m1 ok"));
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+// CRUD: Products
+app.MapGet("/products", async (AppDbContext db) => await db.Products.ToListAsync());
 
-app.MapGet("/weatherforecast", () =>
+app.MapPost("/products", async (Product p, AppDbContext db) =>
 {
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+    db.Products.Add(p);
+    await db.SaveChangesAsync();
+    return Results.Created($"/products/{p.Id}", p);
+});
+
+// Seed data
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Products.AddRange(
+        new Product { Name = "Apple", Price = 0.5m },
+        new Product { Name = "Banana", Price = 0.3m }
+    );
+    db.SaveChanges();
+}
 
 app.Run();
 
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
+// Models + DbContext
+class Product
 {
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
+    public decimal Price { get; set; }
+}
+
+class AppDbContext : DbContext
+{
+    public AppDbContext(DbContextOptions<AppDbContext> opts) : base(opts) { }
+    public DbSet<Product> Products => Set<Product>();
 }
