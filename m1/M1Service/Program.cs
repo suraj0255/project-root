@@ -15,8 +15,8 @@ var app = builder.Build();
 // API docs
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();       // JSON spec
-    app.MapScalarApiReference(); // UI docs with Scalar
+    app.MapOpenApi();             // JSON spec
+    app.MapScalarApiReference();  // UI docs with Scalar
 }
 
 // Health check
@@ -36,11 +36,14 @@ app.MapPost("/products", async (Product p, AppDbContext db) =>
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Products.AddRange(
-        new Product { Name = "Apple", Price = 0.5m },
-        new Product { Name = "Banana", Price = 0.3m }
-    );
-    db.SaveChanges();
+    if (!db.Products.Any())
+    {
+        db.Products.AddRange(
+            new Product { Name = "Apple", Price = 0.5m },
+            new Product { Name = "Banana", Price = 0.3m }
+        );
+        db.SaveChanges();
+    }
 }
 
 app.Run();
