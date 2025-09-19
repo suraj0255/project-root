@@ -1,0 +1,6 @@
+@M2Service_HostAddress = http://localhost:5157
+
+GET {{M2Service_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
